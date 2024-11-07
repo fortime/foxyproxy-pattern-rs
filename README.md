@@ -1,2 +1,2 @@
 # foxyproxy-pattern-rs
-Convert source patterns to foxyproxy patterns
+Convert source patterns to foxyproxy patterns.
