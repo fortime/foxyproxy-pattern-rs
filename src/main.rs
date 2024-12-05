@@ -1,6 +1,6 @@
 use std::{
     fs,
-    io::{self, Read, Write},
+    io::{self, Read, Write}, process,
 };
 
 use anyhow::Result;
@@ -79,8 +79,7 @@ fn dst_stream(dst: &str, encoding: Encoding) -> Result<Box<dyn Write>> {
     }
 }
 
-fn run() -> Result<()> {
-    let args = Args::try_parse()?;
+fn run(args: Args) -> Result<()> {
     let mut src_stream = src_stream(&args.src, args.src_encoding)?;
 
     let rules: Vec<Rule> = match args.parser {
@@ -94,5 +93,9 @@ fn run() -> Result<()> {
 }
 
 fn main() {
-    run().expect("failed to run command")
+    let args = Args::parse();
+    if let Err(e) = run(args) {
+        eprintln!("run command failed: {e}");
+        process::exit(1);
+    }
 }
