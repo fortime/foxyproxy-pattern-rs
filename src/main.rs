@@ -1,6 +1,7 @@
 use std::{
     fs,
-    io::{self, Read, Write}, process,
+    io::{self, Read, Write},
+    process,
 };
 
 use anyhow::Result;

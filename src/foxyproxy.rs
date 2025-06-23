@@ -6,6 +6,8 @@ use serde_derive::{Deserialize, Serialize};
 pub enum Pattern {
     #[serde(rename = "wildcard")]
     Wildcard(String),
+    #[serde(rename = "match")]
+    Match(String),
     #[serde(rename = "regex")]
     Regex(String),
 }
@@ -53,7 +55,7 @@ where
     match <&str as serde::Deserialize>::deserialize(de)? {
         "include" => Ok(true),
         "exclude" => Ok(false),
-        s @ _ => Err(serde::de::Error::unknown_variant(s, &[])),
+        s => Err(serde::de::Error::unknown_variant(s, &[])),
     }
 }
 
@@ -65,7 +67,7 @@ mod tests {
     fn test_serde_json() {
         let rule = Rule {
             title: "test".to_string(),
-            pattern: Pattern::Wildcard("://*.csdn.com".to_string()),
+            pattern: Pattern::Wildcard("*://*.csdn.com/".to_string()),
             active: true,
             include: true,
         };

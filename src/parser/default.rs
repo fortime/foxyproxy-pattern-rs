@@ -15,39 +15,64 @@ impl DefaultParser {
         for line in BufReader::new(src).lines() {
             let line = line?;
             let mut line = line.as_str();
-            if line.is_empty() || line.starts_with("!") {
+            if line.is_empty() || line.starts_with('!') || line.starts_with('[') {
                 continue;
             }
-            let include = if line.starts_with("@@") {
-                line = &line[2..];
+            if line.starts_with('/')
+                || line
+                    .chars()
+                    .all(|c| c.is_ascii_digit() || ".:|@".contains(c))
+            {
+                eprintln!("unsupported pattern: {}", line);
+                continue;
+            }
+            let include = if let Some(l) = line.strip_prefix("@@") {
+                line = l;
                 false
             } else {
                 true
             };
-            let pattern = if line.starts_with("||") {
-                format!("*://*.{}", &line[2..])
-            } else if line.starts_with("|") {
-                line[1..].to_string()
+            let pattern = if let Some(line) = line.strip_prefix("||") {
+                match_or_wildcard(line)
+            } else if let Some(line) = line.strip_prefix("|") {
+                wildcard(line)
             } else if line.starts_with(".") {
-                // exclude parent
-                let parent_domain = &line[1..];
-                res.push(Rule::new(
-                    format!("Exclude Parent Domain[{}]", parent_domain),
-                    Pattern::Wildcard(format!("*://{}", parent_domain)),
-                    true,
-                    !include,
-                ));
-                format!("*://*{}", line)
+                wildcard(&format!("*.{}", line))
             } else {
-                format!("*://*.{}", line)
+                match_or_wildcard(line)
             };
             res.push(Rule::new(
-                format!("Include Pattern[{}]", pattern),
-                Pattern::Wildcard(pattern),
+                format!("Include Pattern[{}/{}]", line, include),
+                pattern,
                 true,
                 include,
             ));
         }
         Ok(res)
+    }
+}
+
+fn match_or_wildcard(s: &str) -> Pattern {
+    if s.contains('*') {
+        wildcard(s)
+    } else {
+        Pattern::Match(format!("*://*.{}/*", s))
+    }
+}
+
+fn wildcard(s: &str) -> Pattern {
+    let s = if let Some(s) = s.strip_prefix("http://") {
+        s
+    } else if let Some(s) = s.strip_prefix("https://") {
+        s
+    } else if let Some(s) = s.strip_prefix("*://") {
+        s
+    } else {
+        s
+    };
+    if s.contains('/') {
+        Pattern::Wildcard(format!("*://{}", s))
+    } else {
+        Pattern::Wildcard(format!("*://{}/", s))
     }
 }

@@ -158,11 +158,11 @@ fn hex_to_u8(high: u8, low: u8) -> io::Result<u8> {
 }
 
 fn hex_char_to_u8(c: u8) -> io::Result<u8> {
-    if c >= b'0' && c <= b'9' {
+    if c.is_ascii_digit() {
         Ok(c - b'0')
-    } else if c >= b'a' && c <= b'f' {
+    } else if (b'a'..=b'f').contains(&c) {
         Ok(c - b'a' + 10)
-    } else if c >= b'A' && c <= b'F' {
+    } else if (b'A'..=b'F').contains(&c) {
         Ok(c - b'A' + 10)
     } else {
         Err(io::Error::other(format!(
